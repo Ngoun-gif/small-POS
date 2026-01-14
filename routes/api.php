@@ -44,3 +44,37 @@ Route::prefix('admin')
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
         Route::put('/users/{id}/roles', [UserController::class, 'syncRoles']); // ✅ admin assign roles
     });
+
+use App\Http\Controllers\Catalog\CategoryController;
+
+// Public
+Route::get('/categories', [CategoryController::class, 'publicIndex']);
+Route::get('/categories/{id}', [CategoryController::class, 'publicShow']);
+
+// Admin
+Route::prefix('admin')
+    ->middleware(['auth:web', 'role:ADMIN'])
+    ->group(function () {
+        Route::get('/categories', [CategoryController::class, 'index']);
+        Route::post('/categories', [CategoryController::class, 'store']);
+        Route::get('/categories/{id}', [CategoryController::class, 'show']);
+        Route::put('/categories/{id}', [CategoryController::class, 'update']);
+        Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+    });
+
+use App\Http\Controllers\Catalog\SubCategoryController;
+
+// Public
+Route::get('/categories/{categoryId}/sub-categories', [SubCategoryController::class, 'publicByCategory']);
+Route::get('/sub-categories/{id}', [SubCategoryController::class, 'publicShow']);
+
+// Admin
+Route::prefix('admin')
+    ->middleware(['auth:web', 'role:ADMIN'])
+    ->group(function () {
+        Route::get('/sub-categories', [SubCategoryController::class, 'index']);
+        Route::post('/sub-categories', [SubCategoryController::class, 'store']);
+        Route::get('/sub-categories/{id}', [SubCategoryController::class, 'show']);
+        Route::put('/sub-categories/{id}', [SubCategoryController::class, 'update']);
+        Route::delete('/sub-categories/{id}', [SubCategoryController::class, 'destroy']);
+    });

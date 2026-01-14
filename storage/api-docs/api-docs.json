@@ -153,6 +153,529 @@
                 ]
             }
         },
+        "/api/categories": {
+            "get": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Public: List active categories",
+                "operationId": "dac37b56adebfd99566670ff2569919f",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/categories/{id}": {
+            "get": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Public: Show active category by ID",
+                "operationId": "887be6769d47cf58a7e2b56f115acd18",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/api/admin/categories": {
+            "get": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Admin: List categories (paginated)",
+                "operationId": "e2c8e1c78b1d10ed85f1a97c4eea03e7",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "food"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden (not ADMIN)"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Admin: Create category",
+                "operationId": "d3a701923a2aa9d2ed79ef305f82c726",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Beverages"
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "example": "uploads/categories/beverages.png"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/categories/{id}": {
+            "get": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Admin: Show category by ID",
+                "operationId": "3440f273630081472a57f8fbe8c393a9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Admin: Update category",
+                "operationId": "9676e64910f80e872ad9059f132f3099",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Food"
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "example": "uploads/categories/food.png"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Admin: Delete category",
+                "operationId": "c9975f27f279e4cf3b6a78aa37e4727d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/categories/{categoryId}/sub-categories": {
+            "get": {
+                "tags": [
+                    "SubCategory"
+                ],
+                "summary": "Public: List active subcategories by category",
+                "operationId": "5e0f348b9c7a372f8f675adeaed5a70c",
+                "parameters": [
+                    {
+                        "name": "categoryId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/sub-categories/{id}": {
+            "get": {
+                "tags": [
+                    "SubCategory"
+                ],
+                "summary": "Public: Show active subcategory by ID",
+                "operationId": "a463bda2dc8489ac6dbbcd33daeead63",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/api/admin/sub-categories": {
+            "get": {
+                "tags": [
+                    "SubCategory"
+                ],
+                "summary": "Admin: List subcategories (paginated)",
+                "operationId": "00e45573c3680445dad0ebde535d7ccc",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "milk"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden (not ADMIN)"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "SubCategory"
+                ],
+                "summary": "Admin: Create subcategory",
+                "operationId": "044335079d04095263f88a2241de39cd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "category_id",
+                                    "name"
+                                ],
+                                "properties": {
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Soft Drinks"
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "example": "uploads/sub_categories/soft-drinks.png"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/sub-categories/{id}": {
+            "get": {
+                "tags": [
+                    "SubCategory"
+                ],
+                "summary": "Admin: Show subcategory by ID",
+                "operationId": "f3440d7527b2b17d6cb21fe668006ed9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "SubCategory"
+                ],
+                "summary": "Admin: Update subcategory",
+                "operationId": "8c2d495e97d9f411773ce2e3310e0e87",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Updated Name"
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "example": "uploads/sub_categories/updated.png"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "SubCategory"
+                ],
+                "summary": "Admin: Delete subcategory",
+                "operationId": "6c381fb74b672fb6d3bd2388c2e42b21",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/users/me": {
             "get": {
                 "tags": [
@@ -541,6 +1064,14 @@
         {
             "name": "Auth",
             "description": "Authentication & Authorization APIs"
+        },
+        {
+            "name": "Category",
+            "description": "Category management APIs"
+        },
+        {
+            "name": "SubCategory",
+            "description": "SubCategory management APIs"
         },
         {
             "name": "User",
