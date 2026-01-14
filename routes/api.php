@@ -78,3 +78,50 @@ Route::prefix('admin')
         Route::put('/sub-categories/{id}', [SubCategoryController::class, 'update']);
         Route::delete('/sub-categories/{id}', [SubCategoryController::class, 'destroy']);
     });
+
+use App\Http\Controllers\Catalog\ProductController;
+
+// Public
+Route::get('/sub-categories/{subCategoryId}/products', [ProductController::class, 'publicBySubCategory']);
+Route::get('/products/{id}', [ProductController::class, 'publicShow']);
+
+// Admin
+Route::prefix('admin')
+    ->middleware(['auth:web', 'role:ADMIN'])
+    ->group(function () {
+        Route::get('/products', [ProductController::class, 'index']);
+        Route::post('/products', [ProductController::class, 'store']);
+        Route::get('/products/{id}', [ProductController::class, 'show']);
+        Route::put('/products/{id}', [ProductController::class, 'update']);
+        Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+    });
+
+use App\Http\Controllers\Catalog\ProductVariantController;
+
+// Public
+Route::get('/products/{productId}/variants', [ProductVariantController::class, 'publicByProduct']);
+Route::get('/variants/{id}', [ProductVariantController::class, 'publicShow']);
+
+// Admin
+Route::prefix('admin')
+    ->middleware(['auth:web', 'role:ADMIN'])
+    ->group(function () {
+        Route::get('/variants', [ProductVariantController::class, 'index']);
+        Route::post('/variants', [ProductVariantController::class, 'store']);
+        Route::get('/variants/{id}', [ProductVariantController::class, 'show']);
+        Route::put('/variants/{id}', [ProductVariantController::class, 'update']);
+        Route::delete('/variants/{id}', [ProductVariantController::class, 'destroy']);
+    });
+
+use App\Http\Controllers\Cart\CartController;
+
+Route::middleware(['auth:web'])->group(function () {
+    Route::get('/cart', [CartController::class, 'show']);
+    Route::post('/cart/items', [CartController::class, 'addItem']);
+    Route::put('/cart/items/{id}', [CartController::class, 'updateItem']);
+    Route::delete('/cart/items/{id}', [CartController::class, 'removeItem']);
+    Route::delete('/cart/clear', [CartController::class, 'clear']);
+});
+
+
+
