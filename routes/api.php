@@ -112,16 +112,46 @@ Route::prefix('admin')
         Route::put('/variants/{id}', [ProductVariantController::class, 'update']);
         Route::delete('/variants/{id}', [ProductVariantController::class, 'destroy']);
     });
+use App\Http\Controllers\Kiosk\KioskCartController;
 
-use App\Http\Controllers\Cart\CartController;
-
-Route::middleware(['auth:web'])->group(function () {
-    Route::get('/cart', [CartController::class, 'show']);
-    Route::post('/cart/items', [CartController::class, 'addItem']);
-    Route::put('/cart/items/{id}', [CartController::class, 'updateItem']);
-    Route::delete('/cart/items/{id}', [CartController::class, 'removeItem']);
-    Route::delete('/cart/clear', [CartController::class, 'clear']);
+/*
+|--------------------------------------------------------------------------
+| KIOSK (NO LOGIN) - Cart
+|--------------------------------------------------------------------------
+*/
+Route::prefix('kiosk')->group(function () {
+    Route::post('/cart/init', [KioskCartController::class, 'init']);
+    Route::get('/cart', [KioskCartController::class, 'show']);
+    Route::post('/cart/items', [KioskCartController::class, 'addItem']);
+    Route::put('/cart/items/{id}', [KioskCartController::class, 'updateItem']);
+    Route::delete('/cart/items/{id}', [KioskCartController::class, 'removeItem']);
+    Route::delete('/cart/clear', [KioskCartController::class, 'clear']);
+    Route::post('/cart/ping', [KioskCartController::class, 'ping']); // Continue button
 });
+
+use App\Http\Controllers\Kiosk\KioskOrderController;
+/*
+|--------------------------------------------------------------------------
+| KIOSK (NO LOGIN) - Checkout/Order
+|--------------------------------------------------------------------------
+*/
+Route::prefix('kiosk')->group(function () {
+    Route::post('/checkout', [KioskOrderController::class, 'checkout']); // Cart -> Order
+    Route::get('/orders/{orderNo}', [KioskOrderController::class, 'showByOrderNo']); // receipt screen
+});
+
+use App\Http\Controllers\Checkout\OrderController as AdminOrderController;
+/*
+|--------------------------------------------------------------------------
+| ADMIN - Orders Management (login required)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin')
+    ->middleware(['auth:web', 'role:ADMIN'])
+    ->group(function () {
+        Route::get('/orders', [AdminOrderController::class, 'adminIndex']);
+        Route::put('/orders/{id}/status', [AdminOrderController::class, 'adminUpdateStatus']);
+    });
 
 
 

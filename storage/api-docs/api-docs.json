@@ -1429,6 +1429,487 @@
                 ]
             }
         },
+        "/api/checkout": {
+            "post": {
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Checkout: Create order from current cart",
+                "operationId": "d69a475176855b1f765aa6bf4c904efc",
+                "responses": {
+                    "201": {
+                        "description": "Order created"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Cart empty / stock issue"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/orders": {
+            "get": {
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Get my orders",
+                "operationId": "1371f42cca3c263587fade861869c34a",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/orders/{id}": {
+            "get": {
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Get my order detail",
+                "operationId": "8026f7cb5f5c6343ef184ef0d9cdf941",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/orders": {
+            "get": {
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Admin: List orders",
+                "operationId": "7d7b6c53f0333dc7cdb9d39125cca73f",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "PENDING"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/orders/{id}/status": {
+            "put": {
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Admin: Update order status",
+                "operationId": "06e62c3041253422b08a117e7ac138fb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "example": "PAID"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/kiosk/cart/init": {
+            "post": {
+                "tags": [
+                    "KioskCart"
+                ],
+                "summary": "Create new kiosk cart session (returns session_key)",
+                "operationId": "3f263bb4a212db69e0589a41fb58b89c",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "session_key": {
+                                            "type": "string",
+                                            "example": "b8b1c7b6-1b0a-4d06-b1d9-1a7d30b7a111"
+                                        },
+                                        "cart_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kiosk/cart": {
+            "get": {
+                "tags": [
+                    "KioskCart"
+                ],
+                "summary": "Get kiosk cart by session key",
+                "operationId": "3c41d0dfe0ca8acfd0af503a2d22dc8a",
+                "parameters": [
+                    {
+                        "name": "X-Session-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "422": {
+                        "description": "Missing session key"
+                    },
+                    "440": {
+                        "description": "Session expired"
+                    }
+                }
+            }
+        },
+        "/api/kiosk/cart/items": {
+            "post": {
+                "tags": [
+                    "KioskCart"
+                ],
+                "summary": "Add item to kiosk cart (or increase qty if exists)",
+                "operationId": "e2980c1ad78c004ad3c48642cf66a430",
+                "parameters": [
+                    {
+                        "name": "X-Session-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "product_variant_id",
+                                    "qty"
+                                ],
+                                "properties": {
+                                    "product_variant_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "qty": {
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "422": {
+                        "description": "Validation/stock error"
+                    },
+                    "440": {
+                        "description": "Session expired"
+                    }
+                }
+            }
+        },
+        "/api/kiosk/cart/items/{id}": {
+            "put": {
+                "tags": [
+                    "KioskCart"
+                ],
+                "summary": "Update kiosk cart item qty",
+                "operationId": "6ec544512ad814184386cb700848f26e",
+                "parameters": [
+                    {
+                        "name": "X-Session-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "qty"
+                                ],
+                                "properties": {
+                                    "qty": {
+                                        "type": "integer",
+                                        "example": 3
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "422": {
+                        "description": "Validation/stock error"
+                    },
+                    "440": {
+                        "description": "Session expired"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "KioskCart"
+                ],
+                "summary": "Remove item from kiosk cart",
+                "operationId": "c904d85e307219c76b2de560df7d114e",
+                "parameters": [
+                    {
+                        "name": "X-Session-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "440": {
+                        "description": "Session expired"
+                    }
+                }
+            }
+        },
+        "/api/kiosk/cart/clear": {
+            "delete": {
+                "tags": [
+                    "KioskCart"
+                ],
+                "summary": "Clear kiosk cart items",
+                "operationId": "0bc2cfe2db0f13bf9647906f999f302a",
+                "parameters": [
+                    {
+                        "name": "X-Session-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "440": {
+                        "description": "Session expired"
+                    }
+                }
+            }
+        },
+        "/api/kiosk/cart/ping": {
+            "post": {
+                "tags": [
+                    "KioskCart"
+                ],
+                "summary": "Refresh session activity (Continue button)",
+                "operationId": "f9802bcd34fa73a9a012d32bb6eb3291",
+                "parameters": [
+                    {
+                        "name": "X-Session-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "440": {
+                        "description": "Session expired"
+                    }
+                }
+            }
+        },
+        "/api/kiosk/checkout": {
+            "post": {
+                "tags": [
+                    "KioskOrder"
+                ],
+                "summary": "Checkout: convert kiosk cart to order",
+                "operationId": "9ef67655232c7daa1f70431a81e69319",
+                "parameters": [
+                    {
+                        "name": "X-Session-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Order created"
+                    },
+                    "422": {
+                        "description": "Cart empty/stock issue"
+                    },
+                    "440": {
+                        "description": "Session expired"
+                    }
+                }
+            }
+        },
+        "/api/kiosk/orders/{orderNo}": {
+            "get": {
+                "tags": [
+                    "KioskOrder"
+                ],
+                "summary": "Get order by order_no (receipt screen)",
+                "operationId": "f9a38096b5eda141c358668485c4b883",
+                "parameters": [
+                    {
+                        "name": "orderNo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "ORD-20260115123000-1234"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
         "/api/users/me": {
             "get": {
                 "tags": [
@@ -1837,6 +2318,18 @@
         {
             "name": "SubCategory",
             "description": "SubCategory management APIs"
+        },
+        {
+            "name": "Order",
+            "description": "Checkout & Order APIs"
+        },
+        {
+            "name": "KioskCart",
+            "description": "Kiosk cart APIs (no login, session-based)"
+        },
+        {
+            "name": "KioskOrder",
+            "description": "Kiosk checkout & order APIs (no login)"
         },
         {
             "name": "User",
