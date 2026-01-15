@@ -223,7 +223,7 @@ class CategoryController extends Controller
      *     @OA\Schema(type="integer", example=1)
      *   ),
      *   @OA\Response(response=200, description="Deleted"),
-     *   @OA\Response(response=404, description="Not found")
+     *   @OA\Response(response=404, description="Not found")..git
      * )
      */
     public function destroy($id)
