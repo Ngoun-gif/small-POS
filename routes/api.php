@@ -1,9 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\User\UserController;
 
+
+
+use App\Http\Controllers\Auth\AuthController;
 /*
 |--------------------------------------------------------------------------
 | Auth Routes
@@ -19,6 +20,7 @@ Route::prefix('auth')->group(function () {
     });
 });
 
+use App\Http\Controllers\User\UserController;
 /*
 |--------------------------------------------------------------------------
 | User Routes (Authenticated users)

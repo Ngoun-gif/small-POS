@@ -7,6 +7,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use OpenApi\Annotations as OA;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @OA\Tag(
@@ -88,16 +89,21 @@ class CategoryController extends Controller
      * @OA\Post(
      *   path="/api/admin/categories",
      *   tags={"Category"},
-     *   summary="Admin: Create category",
+     *   summary="Admin: Create category (with image upload)",
      *   security={{"bearerAuth":{}}},
      *   @OA\RequestBody(
      *     required=true,
-     *     @OA\JsonContent(
-     *       required={"name"},
-     *       @OA\Property(property="name", type="string", example="Beverages"),
-     *       @OA\Property(property="image", type="string", example="uploads/categories/beverages.png"),
-     *       @OA\Property(property="is_active", type="boolean", example=true)
-     *     )
+     *     content={
+     *       @OA\MediaType(
+     *         mediaType="multipart/form-data",
+     *         @OA\Schema(
+     *           required={"name"},
+     *           @OA\Property(property="name", type="string", example="Beverages"),
+     *           @OA\Property(property="image", type="string", format="binary"),
+     *           @OA\Property(property="is_active", type="boolean", example=true)
+     *         )
+     *       )
+     *     }
      *   ),
      *   @OA\Response(response=201, description="Created"),
      *   @OA\Response(response=422, description="Validation error")
@@ -107,13 +113,18 @@ class CategoryController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:categories,name'],
-            'image' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('categories', 'public'); // categories/xxx.png
+        }
+
         $cat = Category::create([
             'name' => $data['name'],
-            'image' => $data['image'] ?? null,
+            'image' => $imagePath, // store path in DB
             'is_active' => $data['is_active'] ?? true,
         ]);
 
@@ -143,10 +154,10 @@ class CategoryController extends Controller
     }
 
     /**
-     * @OA\Put(
+     * @OA\Post(
      *   path="/api/admin/categories/{id}",
      *   tags={"Category"},
-     *   summary="Admin: Update category",
+     *   summary="Admin: Update category (with image upload) - use POST + _method=PUT",
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(
      *     name="id", in="path", required=true,
@@ -154,16 +165,26 @@ class CategoryController extends Controller
      *   ),
      *   @OA\RequestBody(
      *     required=true,
-     *     @OA\JsonContent(
-     *       @OA\Property(property="name", type="string", example="Food"),
-     *       @OA\Property(property="image", type="string", example="uploads/categories/food.png"),
-     *       @OA\Property(property="is_active", type="boolean", example=true)
-     *     )
+     *     content={
+     *       @OA\MediaType(
+     *         mediaType="multipart/form-data",
+     *         @OA\Schema(
+     *           @OA\Property(property="name", type="string", example="Food"),
+     *           @OA\Property(property="image", type="string", format="binary"),
+     *           @OA\Property(property="is_active", type="boolean", example=true),
+     *           @OA\Property(property="_method", type="string", example="PUT")
+     *         )
+     *       )
+     *     }
      *   ),
      *   @OA\Response(response=200, description="Updated"),
      *   @OA\Response(response=422, description="Validation error"),
      *   @OA\Response(response=404, description="Not found")
      * )
+     *
+     * IMPORTANT:
+     * - Swagger UI has trouble with PUT + multipart on some setups
+     * - This endpoint is documented as POST with _method=PUT (Laravel method spoofing)
      */
     public function update(Request $request, $id)
     {
@@ -171,9 +192,17 @@ class CategoryController extends Controller
 
         $data = $request->validate([
             'name' => ['sometimes', 'string', 'max:255', Rule::unique('categories', 'name')->ignore($cat->id)],
-            'image' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'is_active' => ['nullable', 'boolean'],
         ]);
+
+        // If new image uploaded, delete old and store new
+        if ($request->hasFile('image')) {
+            if (!empty($cat->image)) {
+                Storage::disk('public')->delete($cat->image);
+            }
+            $data['image'] = $request->file('image')->store('categories', 'public');
+        }
 
         $cat->update($data);
 
@@ -187,7 +216,7 @@ class CategoryController extends Controller
      * @OA\Delete(
      *   path="/api/admin/categories/{id}",
      *   tags={"Category"},
-     *   summary="Admin: Delete category",
+     *   summary="Admin: Delete category (also deletes image file)",
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(
      *     name="id", in="path", required=true,
@@ -200,6 +229,11 @@ class CategoryController extends Controller
     public function destroy($id)
     {
         $cat = Category::findOrFail($id);
+
+        if (!empty($cat->image)) {
+            Storage::disk('public')->delete($cat->image);
+        }
+
         $cat->delete();
 
         return response()->json(['message' => 'Category deleted']);
