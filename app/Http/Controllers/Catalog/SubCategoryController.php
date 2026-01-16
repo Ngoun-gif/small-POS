@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
 use OpenApi\Annotations as OA;
 
 /**
@@ -16,23 +17,23 @@ use OpenApi\Annotations as OA;
  */
 class SubCategoryController extends Controller
 {
+    /* =========================================================
+     | PUBLIC APIs
+     ========================================================= */
+
     /**
      * @OA\Get(
      *   path="/api/categories/{categoryId}/sub-categories",
      *   tags={"SubCategory"},
      *   summary="Public: List active subcategories by category",
-     *   @OA\Parameter(
-     *     name="categoryId", in="path", required=true,
-     *     @OA\Schema(type="integer", example=1)
-     *   ),
+     *   @OA\Parameter(name="categoryId", in="path", required=true, @OA\Schema(type="integer")),
      *   @OA\Response(response=200, description="OK")
      * )
      */
     public function publicByCategory($categoryId)
     {
         return response()->json(
-            SubCategory::query()
-                ->where('category_id', $categoryId)
+            SubCategory::where('category_id', $categoryId)
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get()
@@ -43,48 +44,45 @@ class SubCategoryController extends Controller
      * @OA\Get(
      *   path="/api/sub-categories/{id}",
      *   tags={"SubCategory"},
-     *   summary="Public: Show active subcategory by ID",
-     *   @OA\Parameter(
-     *     name="id", in="path", required=true,
-     *     @OA\Schema(type="integer", example=10)
-     *   ),
+     *   summary="Public: Show active subcategory",
+     *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=404, description="Not found")
      * )
      */
     public function publicShow($id)
     {
-        $sub = SubCategory::where('is_active', true)->findOrFail($id);
-        return response()->json($sub);
+        return response()->json(
+            SubCategory::where('is_active', true)->findOrFail($id)
+        );
     }
 
-    // =========================
-    // ADMIN CRUD
-    // =========================
+    /* =========================================================
+     | ADMIN APIs
+     ========================================================= */
 
     /**
      * @OA\Get(
      *   path="/api/admin/sub-categories",
      *   tags={"SubCategory"},
-     *   summary="Admin: List subcategories (paginated)",
+     *   summary="Admin: List subcategories",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="category_id", in="query", required=false, @OA\Schema(type="integer", example=1)),
-     *   @OA\Parameter(name="q", in="query", required=false, @OA\Schema(type="string", example="milk")),
-     *   @OA\Response(response=200, description="OK"),
-     *   @OA\Response(response=401, description="Unauthenticated"),
-     *   @OA\Response(response=403, description="Forbidden (not ADMIN)")
+     *   @OA\Parameter(name="category_id", in="query", @OA\Schema(type="integer")),
+     *   @OA\Parameter(name="q", in="query", @OA\Schema(type="string")),
+     *   @OA\Response(response=200, description="OK")
      * )
      */
     public function index(Request $request)
     {
-        $q = $request->query('q');
-        $categoryId = $request->query('category_id');
-
         return response()->json(
             SubCategory::query()
-                ->when($categoryId, fn($qr) => $qr->where('category_id', $categoryId))
-                ->when($q, fn($qr) => $qr->where('name', 'ilike', "%{$q}%"))
-                ->orderByDesc('id')
+                ->when($request->category_id, fn ($q) =>
+                $q->where('category_id', $request->category_id)
+                )
+                ->when($request->q, fn ($q) =>
+                $q->where('name', 'ilike', "%{$request->q}%")
+                )
+                ->latest()
                 ->paginate(20)
         );
     }
@@ -97,16 +95,18 @@ class SubCategoryController extends Controller
      *   security={{"bearerAuth":{}}},
      *   @OA\RequestBody(
      *     required=true,
-     *     @OA\JsonContent(
-     *       required={"category_id","name"},
-     *       @OA\Property(property="category_id", type="integer", example=1),
-     *       @OA\Property(property="name", type="string", example="Soft Drinks"),
-     *       @OA\Property(property="image", type="string", example="uploads/sub_categories/soft-drinks.png"),
-     *       @OA\Property(property="is_active", type="boolean", example=true)
+     *     @OA\MediaType(
+     *       mediaType="multipart/form-data",
+     *       @OA\Schema(
+     *         required={"category_id","name"},
+     *         @OA\Property(property="category_id", type="integer"),
+     *         @OA\Property(property="name", type="string"),
+     *         @OA\Property(property="is_active", type="boolean"),
+     *         @OA\Property(property="image", type="string", format="binary")
+     *       )
      *     )
      *   ),
-     *   @OA\Response(response=201, description="Created"),
-     *   @OA\Response(response=422, description="Validation error")
+     *   @OA\Response(response=201, description="Created")
      * )
      */
     public function store(Request $request)
@@ -116,11 +116,16 @@ class SubCategoryController extends Controller
             'name' => [
                 'required', 'string', 'max:255',
                 Rule::unique('sub_categories', 'name')
-                    ->where(fn($q) => $q->where('category_id', $request->category_id)),
+                    ->where(fn ($q) => $q->where('category_id', $request->category_id)),
             ],
-            'image' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'is_active' => ['nullable', 'boolean'],
         ]);
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')
+                ->store('sub_categories', 'public');
+        }
 
         $sub = SubCategory::create([
             'category_id' => $data['category_id'],
@@ -139,9 +144,14 @@ class SubCategoryController extends Controller
      * @OA\Get(
      *   path="/api/admin/sub-categories/{id}",
      *   tags={"SubCategory"},
-     *   summary="Admin: Show subcategory by ID",
+     *   summary="Admin: Show subcategory",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=10)),
+     *   @OA\Parameter(
+     *     name="id",
+     *     in="path",
+     *     required=true,
+     *     @OA\Schema(type="integer")
+     *   ),
      *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=404, description="Not found")
      * )
@@ -157,18 +167,25 @@ class SubCategoryController extends Controller
      *   tags={"SubCategory"},
      *   summary="Admin: Update subcategory",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=10)),
+     *   @OA\Parameter(
+     *     name="id",
+     *     in="path",
+     *     required=true,
+     *     @OA\Schema(type="integer")
+     *   ),
      *   @OA\RequestBody(
      *     required=true,
-     *     @OA\JsonContent(
-     *       @OA\Property(property="category_id", type="integer", example=1),
-     *       @OA\Property(property="name", type="string", example="Updated Name"),
-     *       @OA\Property(property="image", type="string", example="uploads/sub_categories/updated.png"),
-     *       @OA\Property(property="is_active", type="boolean", example=true)
+     *     @OA\MediaType(
+     *       mediaType="multipart/form-data",
+     *       @OA\Schema(
+     *         @OA\Property(property="category_id", type="integer"),
+     *         @OA\Property(property="name", type="string"),
+     *         @OA\Property(property="is_active", type="boolean"),
+     *         @OA\Property(property="image", type="string", format="binary")
+     *       )
      *     )
      *   ),
      *   @OA\Response(response=200, description="Updated"),
-     *   @OA\Response(response=422, description="Validation error"),
      *   @OA\Response(response=404, description="Not found")
      * )
      */
@@ -179,25 +196,31 @@ class SubCategoryController extends Controller
         $data = $request->validate([
             'category_id' => ['sometimes', 'integer', 'exists:categories,id'],
             'name' => ['sometimes', 'string', 'max:255'],
-            'image' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
-        // If name/category changed, ensure unique per category
         if (isset($data['name']) || isset($data['category_id'])) {
-            $newCategoryId = $data['category_id'] ?? $sub->category_id;
-            $newName = $data['name'] ?? $sub->name;
-
-            $exists = SubCategory::where('category_id', $newCategoryId)
-                ->where('name', $newName)
+            $exists = SubCategory::where('category_id', $data['category_id'] ?? $sub->category_id)
+                ->where('name', $data['name'] ?? $sub->name)
                 ->where('id', '!=', $sub->id)
                 ->exists();
 
             if ($exists) {
                 return response()->json([
-                    'message' => 'The name has already been taken for this category.'
+                    'message' => 'Name already exists in this category'
                 ], 422);
             }
+        }
+
+        if ($request->hasFile('image')) {
+            if ($sub->image) {
+                Storage::disk('public')->delete($sub->image);
+            }
+            $data['image'] = $request->file('image')
+                ->store('sub_categories', 'public');
+        } else {
+            unset($data['image']);
         }
 
         $sub->update($data);
@@ -214,7 +237,12 @@ class SubCategoryController extends Controller
      *   tags={"SubCategory"},
      *   summary="Admin: Delete subcategory",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=10)),
+     *   @OA\Parameter(
+     *     name="id",
+     *     in="path",
+     *     required=true,
+     *     @OA\Schema(type="integer", example=1)
+     *   ),
      *   @OA\Response(response=200, description="Deleted"),
      *   @OA\Response(response=404, description="Not found")
      * )
@@ -222,6 +250,12 @@ class SubCategoryController extends Controller
     public function destroy($id)
     {
         $sub = SubCategory::findOrFail($id);
+
+        // Delete image if exists
+        if ($sub->image) {
+            Storage::disk('public')->delete($sub->image);
+        }
+
         $sub->delete();
 
         return response()->json(['message' => 'SubCategory deleted']);

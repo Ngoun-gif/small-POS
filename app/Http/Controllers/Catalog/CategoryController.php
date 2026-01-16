@@ -219,11 +219,13 @@ class CategoryController extends Controller
      *   summary="Admin: Delete category (also deletes image file)",
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(
-     *     name="id", in="path", required=true,
+     *     name="id",
+     *     in="path",
+     *     required=true,
      *     @OA\Schema(type="integer", example=1)
      *   ),
      *   @OA\Response(response=200, description="Deleted"),
-     *   @OA\Response(response=404, description="Not found")..git
+     *   @OA\Response(response=404, description="Not found")
      * )
      */
     public function destroy($id)

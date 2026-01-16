@@ -66,19 +66,16 @@ Route::prefix('admin')
 
 use App\Http\Controllers\Catalog\SubCategoryController;
 
-// Public
+/* Public */
 Route::get('/categories/{categoryId}/sub-categories', [SubCategoryController::class, 'publicByCategory']);
 Route::get('/sub-categories/{id}', [SubCategoryController::class, 'publicShow']);
 
-// Admin
+/* Admin */
 Route::prefix('admin')
     ->middleware(['auth:web', 'role:ADMIN'])
     ->group(function () {
-        Route::get('/sub-categories', [SubCategoryController::class, 'index']);
-        Route::post('/sub-categories', [SubCategoryController::class, 'store']);
-        Route::get('/sub-categories/{id}', [SubCategoryController::class, 'show']);
-        Route::put('/sub-categories/{id}', [SubCategoryController::class, 'update']);
-        Route::delete('/sub-categories/{id}', [SubCategoryController::class, 'destroy']);
+        Route::apiResource('sub-categories', SubCategoryController::class)
+            ->except(['create', 'edit']);
     });
 
 use App\Http\Controllers\Catalog\ProductController;
